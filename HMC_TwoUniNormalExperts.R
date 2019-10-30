@@ -7,6 +7,7 @@ mu1    <- 3
 mu2    <- 7
 sigma1 <- 2
 sigma2 <- 2
+m      <- 1
 
 gamma  <- c(1,5)
 prob   <- p_calculator(gamma,x)
@@ -58,8 +59,9 @@ ddsigma(which=1,y,prob,mu1,sigma1,mu2,sigma2)
 ddsigma(which=2,y,prob,mu1,sigma1,mu2,sigma2)
 
 ################################################################
+###Code below samples mu1###
 
-HMC <- function(U, grad_U, epsilon, L, current_q) 
+HMC <- function(U, ddgamma, epsilon, L, current_q) 
 {
    q <- current_q
    p <- rnorm(length(q),0,1)
@@ -67,7 +69,7 @@ HMC <- function(U, grad_U, epsilon, L, current_q)
    
    # Make a half step for momentum at the beginning
    
-   p <- p - epsilon * grad_U(x=q,prob,mu1,sigma1,mu2,sigma2)/2
+   p <- p - epsilon * ddmu(which=1,x,prob,mu1=q,sigma1,mu2,sigma2)/2
    
    # Alterate full steps for position and momentum
    
@@ -77,7 +79,7 @@ HMC <- function(U, grad_U, epsilon, L, current_q)
       q <- q+epsilon*p/m
       
       # Make a full step for the momentum, except at the end of trajectory
-      if( i!= L) p <- p - epsilon * grad_U(x=q,prob,mu1,sigma1,mu2,sigma2) /2
+      if( i!= L) p <- p - epsilon * ddmu(which=1,x,prob,mu1=q,sigma1,mu2,sigma2) /2
    }
    #Negate momentum at end of trajectory to make proposal symmetric
    
@@ -85,9 +87,9 @@ HMC <- function(U, grad_U, epsilon, L, current_q)
    
    #Evaluate potential and kinetic energies at start and end of trajectory
    
-   current_U  <- U(x=current_q,prob,mu1,sigma1,mu2,sigma2)
+   current_U  <- U(y,prob,mu1=current_q,sigma1,mu2,sigma2)
    current_K  <- sum(current_p^2)/2
-   proposed_U <- U(x=q,prob,mu1,sigma1,mu2,sigma2)
+   proposed_U <-  U(y,prob,mu1=q,sigma1,mu2,sigma2)
    proposed_K <- sum(p^2)/2
    
    #Accept or reject
@@ -103,3 +105,13 @@ HMC <- function(U, grad_U, epsilon, L, current_q)
    }
    
 }
+
+N       <- 100
+mus     <- c()
+mus[1]  <- 1
+
+for(j in 2:N){
+   mus[j]<-HMC(U,ddmu,epsilon = 1,L=10,current_q = mus[j-1])
+}
+
+hist(mus)
