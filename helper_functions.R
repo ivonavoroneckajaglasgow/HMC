@@ -33,3 +33,30 @@ p_calculator = function(gamma,x){
   p             <- a_gamma/(1+a_gamma)
   return(p)
 }
+
+assign_paramater_values <- function(params, which, v) {
+  positions <- cumsum(c(0, sapply(params[which], length)))
+  positions_start <- positions[-length(positions)]+1
+  positions_end <- positions[-1]
+  names(positions_start) <- which
+  names(positions_end) <- which
+  for (i in seq_along(which))
+    params[[which[i]]] <- v[positions_start[i]:positions_end[i]] 
+  params
+}
+
+translate_which <- function(which,text=FALSE){
+  which_numeric <-c()
+  
+  for(i in 1:length(which)){
+    which_numeric <-c(which_numeric,which(c("gamma","beta1","sigma1","beta2","sigma2")==which[i]))
+  }
+  
+  if(text==TRUE){
+    my_list<-list(c("gamma0","gamma1"),c("beta01","beta11"),c("sigma1"),c("beta02","beta12"),"sigma2")
+  }else{
+  my_list<-list(c(1,2),c(3,4),5,c(6,7),8)
+  }
+  return(unlist(my_list[which_numeric]))
+}
+

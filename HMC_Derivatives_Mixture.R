@@ -49,8 +49,8 @@ ddbeta        <- function(x,y,params){
 
 ddsigma       <- function(x,y,params){
   
-  #sigma1 <- exp(log(sigma1))
-  #sigma2 <- exp(log(sigma2))
+  sigma1 <- exp(params$sigma1)
+  sigma2 <- exp(params$sigma2)
   
   prob    <- p_calculator(params$gamma,x)
   mu    <- getmu(x, params)
@@ -64,20 +64,25 @@ ddsigma       <- function(x,y,params){
   result_sigma2 <- sum(first*second_sigma2*1/(2*params$sigma2)*(1-(y-mu[,2])^2/params$sigma2))
   
   
-  #return(c(result_sigma1*sigma1, result_sigma2*sigma2))
-  return(c(result_sigma1, result_sigma2))
+  return(c(result_sigma1*exp(params$sigma1), result_sigma2*exp(params$sigma2)))
+  
 }
 
-ddall         <- function(x,y,params,which=c(1,2,3,4,5)){
+ddall         <- function(x,y,params,which=c("gamma","beta1","sigma1","beta2","sigma2")){
   
-  result<-list(ddgamma=ddgamma(x,y,params),
+  which_helper <- translate_which(which)
+  
+  result<-c(   ddgamma=ddgamma(x,y,params),
                ddbeta1=ddbeta(x,y,params)[1:2],
                ddsigma1=ddsigma(x,y,params)[1],
                ddbeta2=ddbeta(x,y,params)[3:4],
                ddsigma2=ddsigma(x,y,params)[2]
             )
   
-  return(result[[which]])
+  result<- result[which_helper]
+  names(result) <-translate_which(which, text=TRUE)
+  
+  return(result)
 }
 
 

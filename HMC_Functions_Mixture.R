@@ -6,8 +6,7 @@ HMC_helper <- function(x, y, U, ddall, epsilon, L, current_q, m=1, which)
   current_p <- p
   
   # Make a half step for momentum at the beginning
-  params_q          <- params
-  params_q[[which]] <- q
+  params_q          <- assign_paramater_values(params,which,v=q)
   p                 <- p - epsilon * ddall(x,y,params=params_q,which)/2
   
   # Alterate full steps for position and momentum
@@ -18,7 +17,7 @@ HMC_helper <- function(x, y, U, ddall, epsilon, L, current_q, m=1, which)
     q <- q+epsilon*p/m
     
     if( i!= L){ 
-      params_q[[which]] <- q
+      params_q          <- assign_paramater_values(params_q,which,v=q)
       p                 <- p - epsilon * ddall(x,y,params=params_q,which)/2
     }
   }
@@ -30,13 +29,11 @@ HMC_helper <- function(x, y, U, ddall, epsilon, L, current_q, m=1, which)
   
   #Evaluate potential and kinetic energies at start and end of trajectory
   
-  params_current          <- params
-  params_current[[which]] <- current_q
+  params_current          <- assign_paramater_values(params,which,v=current_q)
   current_U               <- U(x,y,params_current)
   
   
-  params_proposed          <- params
-  params_proposed[[which]] <- q
+  params_proposed          <- assign_paramater_values(params,which,v=q)
   proposed_U               <- U(x,y,params_proposed)
   
   
@@ -82,16 +79,11 @@ HMC <- function(x, y, N, burnin, U, ddall, epsilon, L, current_q, which, do.plot
   HMC_result$accept <- accept
   
   ##plotting### 
-  main_labels <- list(c("gamma0","gamma1"),
-                      c("beta01","beta11"),
-                      "sigma1",
-                      c("beta02","beta12"),
-                      "sigma2")
   
-  my_labels   <- main_labels[[which]] 
-  
+  my_labels <- translate_which(which,text=TRUE)
+
   if(do.plot==TRUE){
-    par(mfrow=c(1,2))
+    par(mfrow=c(2,2))
     for(i in 1:ncol(result)){
       hist(result[burnin:nrow(result),i],xlab=my_labels[i],main=my_labels[i])
       if (!is.na(actual[i])) abline(v=actual[i],col=2)
