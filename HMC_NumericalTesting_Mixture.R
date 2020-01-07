@@ -1,14 +1,17 @@
+source("HMC_Derivatives_Mixture.R")
+source("helper_functions.R")
 load("data1AR.RData")
 x<-loc$x
 y<-loc$y
 
 params<-list(gamma=c(8,-2.5),
              beta1=c(5,2),
-             sigma1=1,
+             sigma1=1.15,
              beta2=c(3,1),
-             sigma2=1
+             sigma2=1.4
 )
 
+###test betas####
 params_test <- params
 params_test$beta1[1] <- params_test$beta1[1]+1e-5
 
@@ -46,6 +49,7 @@ data.frame(
   ddbeta = ddbeta(x,y,params)[4]
 )
 
+###test gamma###
 params_test <- params
 params_test$gamma[1] <- params_test$gamma[1]+1e-5
 
@@ -64,6 +68,7 @@ data.frame(
   ddgamma = ddgamma(x,y,params)[2]
 )
 
+###test sigma###
 params_test <- params
 params_test$sigma1 <- params_test$sigma1+1e-5
 
@@ -81,3 +86,19 @@ data.frame(
   U=  (sum(U(x,y,params_test))-sum(U(x,y,params)))/1e-5,
   ddsigma2 = ddsigma(x,y,params)[2]
 )
+
+###test log sigma???###
+
+params2            <- params
+params2$sigma1     <- exp(params2$sigma1)
+params_test        <- params2
+params_test$sigma1 <- params_test$sigma1+1e-5
+
+data.frame(
+  LogLik= (l(x,y,params_test)-l(x,y,params2))/1e-5, 
+  U=  (sum(U(x,y,params_test))-sum(U(x,y,params2)))/1e-5,
+  ddlogsigma1 = ddlogsigma(x,y,params)[1]
+)
+
+
+

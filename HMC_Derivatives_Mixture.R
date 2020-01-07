@@ -49,23 +49,27 @@ ddbeta        <- function(x,y,params){
 
 ddsigma       <- function(x,y,params){
   
-  sigma1 <- exp(params$sigma1)
-  sigma2 <- exp(params$sigma2)
-  
   prob    <- p_calculator(params$gamma,x)
-  mu    <- getmu(x, params)
-  first <- -1/dmix(x,y,params)
-  
+  mu      <- getmu(x, params)
+  first   <- -1/dmix(x,y,params)
+
   second_sigma1 <- -dnorm(y,mu[,1],sqrt(params$sigma1))*prob
   result_sigma1 <- sum(first*second_sigma1*1/(2*params$sigma1)*(1-(y-mu[,1])^2/params$sigma1))
-  
   
   second_sigma2 <- -dnorm(y,mu[,2],sqrt(params$sigma2))*(1-prob)
   result_sigma2 <- sum(first*second_sigma2*1/(2*params$sigma2)*(1-(y-mu[,2])^2/params$sigma2))
   
+  return(c(result_sigma1, result_sigma2))
+}
+
+ddlogsigma <- function(x,y,params){
+ params_new <- params
+ params_new$sigma1 <- exp(params$sigma1)
+ params_new$sigma2 <- exp(params$sigma2)
+ 
+ helper<-ddsigma(x,y,params_new)
   
-  return(c(result_sigma1*exp(params$sigma1), result_sigma2*exp(params$sigma2)))
-  
+ return(helper*c(params_new$sigma1, params_new$sigma2)) 
 }
 
 ddall         <- function(x,y,params,which=c("gamma","beta1","sigma1","beta2","sigma2")){

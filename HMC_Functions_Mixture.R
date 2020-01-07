@@ -59,9 +59,10 @@ HMC <- function(x, y, N, burnin, U, ddall, epsilon, L, current_q, which, do.plot
   result      <- matrix(nrow=N,ncol=length(current_q))
   result[1,]  <- current_q
   accept      <- numeric(N)
-  ESS         <-c()
+  ESS         <- c()
   
   pb <- txtProgressBar(min=0, max=N, style=3)
+  
   for(j in 2:N){
     setTxtProgressBar(pb, j)
     

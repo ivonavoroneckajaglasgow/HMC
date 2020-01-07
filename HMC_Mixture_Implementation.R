@@ -19,7 +19,7 @@ params<-list(gamma=-c(-11.95,2.42),
 
 ###Derivatives###
 
-ddall(x,y,params)
+ddall(x,y,params) ###now returns unlogged sigma
 
 
 ###Set parameters###
