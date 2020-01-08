@@ -34,7 +34,7 @@ p_calculator = function(gamma,x){
   return(p)
 }
 
-assign_paramater_values <- function(params, which, v) {
+assign_paramater_values <- function(params, which=c("gamma","beta1","sigma1","beta2","sigma2"), v) {
   positions <- cumsum(c(0, sapply(params[which], length)))
   positions_start <- positions[-length(positions)]+1
   positions_end <- positions[-1]
