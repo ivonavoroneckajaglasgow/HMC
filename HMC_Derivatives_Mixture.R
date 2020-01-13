@@ -80,7 +80,7 @@ ddall         <- function(x,y,params,which=c("gamma","beta1","sigma1","beta2","s
                ddbeta1=ddbeta(x,y,params)[1:2],
                ddsigma1=ddsigma(x,y,params)[1],
                ddbeta2=ddbeta(x,y,params)[3:4],
-               ddsigma2=ddsigma(x,y,params)[2]
+               ddsigma2=ddlogsigma(x,y,params)[2]
             )
   
   result<- result[which_helper]
