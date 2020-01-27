@@ -5,6 +5,7 @@ load("data1AR.RData")
 x<-loc$x
 y<-loc$y
 
+x11()
 par(mfrow=c(1,1))
 plot(x,y)
 
@@ -52,7 +53,7 @@ params<-list(gamma=-c(-11.95,2.42),
 ###test estimating stuff###
 ###let's do gamma###
 
-epsilon <- 0.05
+epsilon <- 0.1
 L <- 20
 N <- 1000
 burnin <- 200
@@ -60,7 +61,17 @@ burnin <- 200
 set.seed(7)
 gamma_result<-HMC(x,y,N,burnin, U_HMC, ddall, epsilon, L, current_q=c(0,0), which="gamma")
 plot_HMC(gamma_result$all_q,acceptance = gamma_result$accept,burnin, xlab="gamma0",ylab="gamma1")
-plot_HMC(gamma_result$output,burnin=burnin, xlab="gamma0",ylab="gamma1")
+plot_HMC(gamma_result$all_q,acceptance = gamma_result$accept,burnin, xlab="gamma0",ylab="gamma1",arrows = TRUE)
+
+plot_HMC(gamma_result$output,acceptance = NA,burnin, xlab="gamma0",ylab="gamma1")
+plot_HMC(gamma_result$output,acceptance = NA,burnin, xlab="gamma0",ylab="gamma1",lines=FALSE)
+
+plot_HMC_leapfrog(result=gamma_result$all_q,
+                  leapfrog=gamma_result$leapfrog,
+                  acceptance=gamma_result$accept, 
+                  burnin,xlab="gamma0",ylab="gamma1",points=FALSE)
+
+
 est_gamma<-colMeans(gamma_result$output[burnin:N,])
 est_mix<-p_calculator(est_gamma,x)
 
@@ -71,22 +82,34 @@ plot(x,y,pch = 20,col = Col)
 mean(gamma_result$accept[burnin:N])
 
 ###beta###
-epsilon <- 0.05
+epsilon <- 0.01
 L <- 20
 N <- 1000
 burnin <- 200
 
 set.seed(7)
 beta_result<-HMC(x,y,N,burnin, U_HMC, ddall, epsilon, L, current_q=c(mean(y),0,mean(y),0), which=c("beta1","beta2"))
-plot_HMC(result=beta_result$all_q[,1:2], acceptance= beta_result$accept,
-         burnin=burnin, xlab="beta01", ylab="beta11")
-plot_HMC(result=beta_result$output[,1:2],
-         burnin=burnin, xlab="beta01", ylab="beta11")
+plot_HMC(result=beta_result$all_q[,1:2], acceptance= beta_result$accept,burnin=burnin, xlab="beta01", ylab="beta11")
+#plot_HMC(result=beta_result$all_q[,1:2], acceptance= beta_result$accept,burnin=burnin, xlab="beta01", ylab="beta11",arrows = TRUE)
+plot_HMC(result=beta_result$all_q[,1:2], acceptance= NA, burnin=burnin, xlab="beta01",ylab="beta11")
+plot_HMC(result=beta_result$all_q[,1:2], acceptance= NA, burnin=burnin, xlab="beta01",ylab="beta11",lines = FALSE)
 
-plot_HMC(result=beta_result$all_q[,3:4], acceptance= beta_result$accept,
-         burnin=burnin, xlab="beta02", ylab="beta12")
-plot_HMC(result=beta_result$output[,3:4],
-         burnin=burnin, xlab="beta02", ylab="beta12")
+plot_HMC_leapfrog(result=beta_result$all_q[,1:2],
+                  leapfrog=beta_result$leapfrog[,c(1,2,3)],
+                  acceptance=beta_result$accept, 
+                  burnin, xlab="beta01",ylab="beta11",points=FALSE)
+
+
+plot_HMC(result=beta_result$all_q[,3:4], acceptance= beta_result$accept,burnin=burnin, xlab="beta01", ylab="beta11")
+#plot_HMC(result=beta_result$all_q[,3:4], acceptance= beta_result$accept,burnin=burnin, xlab="beta01", ylab="beta11",arrows = TRUE)
+plot_HMC(result=beta_result$all_q[,3:4], acceptance= NA, burnin=burnin, xlab="beta01",ylab="beta11")
+plot_HMC(result=beta_result$all_q[,3:4], acceptance= NA, burnin=burnin, xlab="beta01",ylab="beta11",lines = FALSE)
+
+plot_HMC_leapfrog(result=beta_result$all_q[,3:4],
+                  leapfrog=beta_result$leapfrog[,c(1,4,5)],
+                  acceptance=beta_result$accept, 
+                  burnin, xlab="beta02",ylab="beta12",points=FALSE)
+
 
 beta_est <- colMeans(beta_result$output[burnin:N,])
 plot(x,y)
@@ -104,10 +127,18 @@ burnin <- 200
 set.seed(7)
 sigma_result<-HMC(x,y,N,burnin, U_HMC, ddall, epsilon, L, current_q=c(1,1), which=c("sigma1","sigma2"))
 plot_HMC(sigma_result$all_q,acceptance =sigma_result$accept,burnin, xlab="sigma1",ylab="sigma2")
-plot_HMC(sigma_result$output,burnin=burnin, xlab="sigma1",ylab="sigma2")
+#plot_HMC(sigma_result$all_q,acceptance =sigma_result$accept,burnin, xlab="sigma1",ylab="sigma2",arrows = TRUE)
 
 plot_HMC_sigma(sigma_result$all_q,acceptance = sigma_result$accept,burnin = burnin)
-plot_HMC_sigma(sigma_result$output,burnin = burnin)
+plot_HMC_sigma(sigma_result$all_q,acceptance = sigma_result$accept,burnin = burnin,arrows = TRUE)
+plot_HMC_sigma(sigma_result$all_q,acceptance = NA,burnin = burnin)
+plot_HMC_sigma(sigma_result$all_q,acceptance = NA,burnin = burnin,lines=FALSE)
+
+plot_HMC_leapfrog(result=sigma_result$all_q,
+                  acceptance = sigma_result$accept,
+                  leapfrog = sigma_result$leapfrog,
+                  burnin, xlab="sigma1",ylab="sigma2",points=FALSE)
+
 
 sigma_est <- exp(colMeans(sigma_result$output[burnin:N,]))
 par(mfrow=c(1,1))

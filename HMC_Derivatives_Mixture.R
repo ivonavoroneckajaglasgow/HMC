@@ -11,13 +11,17 @@ getmu         <- function(x,params){
   return(cbind(mu1,mu2))
 }
 
-dmix          <- function(x,y,params,transform_sigma=FALSE){
+dmix          <- function(x,y,params,transform_sigma=FALSE,explog=TRUE){
   if(transform_sigma==TRUE) params <- transform_sigma(params)
   
   prob   <- p_calculator(params$gamma,x)
   mu     <- getmu(x, params)
-  prob*dnorm(y,mu[,1],sqrt(params$sigma1))+(1-prob)*dnorm(y,mu[,2],sqrt(params$sigma2))
-
+  if(explog==TRUE){
+   return(expm1(log1p(prob-1)+dnorm(y,mu[,1],sqrt(params$sigma1),log=TRUE))+1
+          +expm1(log1p((1-prob-1))+dnorm(y,mu[,2],sqrt(params$sigma2),log=TRUE))+1)
+  }else{
+  return(prob*dnorm(y,mu[,1],sqrt(params$sigma1))+(1-prob)*dnorm(y,mu[,2],sqrt(params$sigma2)))
+}
 }
 
 U             <- function(x,y,params,transform_sigma=FALSE){
@@ -45,13 +49,29 @@ ddgamma       <- function(x,y,params){
 
 
 ddbeta_helper <- function(x,y,params){
+  
   prob    <- p_calculator(params$gamma,x)
   mu      <- getmu(x, params)
-  first   <- -1/dmix(x,y,params)
-  second1 <- prob*dnorm(y,mean=mu[,1],sd=sqrt(params$sigma1))
-  second2 <- (1-prob)*dnorm(y,mean=mu[,2],sd=sqrt(params$sigma2))
   
+  ###first component exp(log(pi*f_1))
+  second1 <- expm1(log1p(prob-1)+dnorm(y,mean=mu[,1],sd=sqrt(params$sigma1),log=TRUE))+1
+  ###second component exp(log((1-pi)*f_2))
+  second2 <- expm1(log1p((1-prob-1))+dnorm(y,mean=mu[,2],sd=sqrt(params$sigma2),log=TRUE))+1
+
+  first   <- -1/dmix(x,y,params)
   return(cbind(first*second1,first*second2))
+  
+  ####the adjustment bit that I am not sure about####
+  #A<- log(second1)
+  #B<- log(second2)
+  
+  #largest <- A
+  #largest[B>A] <- B[B>A]
+  
+  #first   <- -1/(dmix(x,y,params)-largest)
+  #return(cbind(first*(second1-largest),first*(second2-largest)))
+  
+ 
 }
 
 ddbeta        <- function(x,y,params){

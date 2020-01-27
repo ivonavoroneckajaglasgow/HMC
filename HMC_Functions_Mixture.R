@@ -53,6 +53,7 @@ HMC_helper <- function(x, y, U, ddall, epsilon, L, current_q, m=1, which)
   records$q         <- q
   records$current_q <- current_q
   records$accept    <- ifelse(log(runif(1))< r,1,0)
+  records$leapfrog  <- allq
   
   if(records$accept==1){
     records$final     <- records$q
@@ -83,6 +84,7 @@ HMC <- function(x, y, N, burnin, U, ddall, epsilon, L, current_q, which=c("gamma
   
   HMC_result$accept <- c()
   HMC_result$ESS    <- c()
+  HMC_result$leapfrog<- c()
   
   pb <- txtProgressBar(min=0, max=N, style=3)
   
@@ -95,6 +97,7 @@ HMC <- function(x, y, N, burnin, U, ddall, epsilon, L, current_q, which=c("gamma
     HMC_result$output[j,]<- a$final
     HMC_result$all_q[j,] <- a$q
     HMC_result$accept[j] <- a$accept
+    HMC_result$leapfrog  <- rbind(HMC_result$leapfrog,a$leapfrog)
   }
   
   for(i in 1:ncol( HMC_result$output)){

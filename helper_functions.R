@@ -60,77 +60,201 @@ translate_which <- function(which,text=FALSE){
   return(unlist(my_list[which_numeric]))
 }
 
-plot_HMC <- function(result, acceptance=NA, burnin, xlab, ylab, plot_every=1){
+plot_HMC <- function(result, acceptance=NA, burnin, xlab, ylab, plot_every=1,arrows=FALSE,lines=TRUE){
   
-  result <- result[burnin:N,]
-  acceptance <-acceptance[burnin:N]
+  ###trim burnin off###
+  N          <- nrow(result)
+  result     <- result[(burnin+1):N,]
+  if(all(is.na(acceptance))) acceptance <- rep(1,times=N)
+  acceptance <- acceptance[(burnin+1):N]
   
-  logic <- all(is.na(acceptance))==FALSE
+  ###has the first point been accepted?###
+  accept     <- acceptance[1]
+  col_temp   <- c(2,1)[accept+1]
   
-  N<- nrow(result)
-  
-  if(logic){
-    main <- paste("Acceptance rate=",round(mean(acceptance,na.rm = TRUE),2))
-  }else{
-    main <- c("Output of the HMC")
-  }
-  
+  ###set up plotting area###
   par(mfrow=c(1,1))
-  plot(NULL,ylim=range(result[,2]),xlim=range(result[,1]),
-       ylab=ylab,xlab=xlab)
-  title(main)
-  if(logic) legend("topright",c("accepted","rejected"),lty=1,col=c(1,2)) 
+  plot(NULL,ylim=range(result[,2]),xlim=range(result[,1]),ylab=ylab,xlab=xlab)
+  if(all(acceptance==1)) {title("Output of HMC")}
+  else{title(paste("Acceptance rate=",round(mean(acceptance,na.rm = TRUE),2)))}
+  legend("topright",c("accepted","rejected"),lty=1,col=c(1,2)) 
+  
+  ###print the first point###
+  current_point <- c(result[1,1],result[1,2])
+  points(current_point[1],current_point[2], col=col_temp)
+  
+  ###set up plotting sequence###
+  my_seq <- seq(from=2,to=nrow(result),by=plot_every)
   
   
-  
-  my_seq <- seq(from=2,to=N,by=plot_every)
+  ###plot all the points###
   
   for(i in my_seq){
-    if(logic){
-    colour <- c(2,1)[acceptance[i]+1]
-    }else{
-      colour<-1
+  
+  ###if previous point has been accepted then set it as the current point###
+    if(accept==1){
+      current_point  <- c(result[i-1,1],result[i-1,2])
     }
     
-    points(c(result[i-1,1],result[i,1]),c(result[i-1,2],result[i,2]))
-    lines(c(result[i-1,1],result[i,1]),c(result[i-1,2],result[i,2]),col=colour)
+  ###record the proposed point and if it has been accepted or not###
+  ###if accepted-plot it in black, if rejected - in red  
+    accept         <- acceptance[i]  
+    proposed_point <- c(result[i,1],result[i,2])
+    colour <- c(2,1)[acceptance[i]+1]
   
+  ###plot the proposed point###
+    points(proposed_point[1],proposed_point[2],col=colour)
+    
+  ###join the proposed point with the current point in relevant colour###
+  ###if want the direction arrows to be shown, then set arrows=TRUE###
+  if(lines==TRUE){
+    if(arrows==FALSE){
+      segments(current_point[1],current_point[2], proposed_point[1],proposed_point[2], col= colour)
+    }else{
+     arrows(current_point[1],current_point[2], proposed_point[1],proposed_point[2], col= colour)
+    }
   }
-
+  }
 }
 
-plot_HMC_sigma <- function(result, acceptance=NA, burnin, plot_every=1){
+plot_HMC_sigma <- function(result, acceptance=NA, burnin, plot_every=1,arrows=FALSE,lines=TRUE){
   
-  result <- result[burnin:N,]
-  acceptance <-acceptance[burnin:N]
+  ###trim the burnin off###
+  N          <- nrow(result)
+  result     <- result[(burnin+1):N,]
+  if(all(is.na(acceptance))) acceptance <- rep(1,times=N)
+  acceptance <- acceptance[(burnin+1):N]
   
-  logic <- all(is.na(acceptance))==FALSE
+  ###has the first point been accepted?###
+  accept     <- acceptance[1]
+  col_temp   <- c(2,1)[accept+1]
   
-  if(logic){
-    main <- paste("Acceptance rate=",round(mean(acceptance,na.rm = TRUE),2))
-  }else{
-    main <- c("Output of the HMC")
-  }
-  
+  ###plot this for both sigmas###
   par(mfrow=c(1,2))
   
   for(i in 1:2){
-  plot(NULL,ylim=range(result[,i]),xlim=c(1,(N-burnin)),
-       ylab=paste("sigma",i),xlab="Iteration")
-  title(main)
-    
+  ###set up plotting area###
+  plot(NULL,ylim=range(result[,i]),xlim=c(1,(N-burnin)),ylab=paste("sigma",i),xlab="Iteration")
+  if(all(acceptance==1)) {title("Output of HMC")}
+  else{title(paste("Acceptance rate=",round(mean(acceptance,na.rm = TRUE),2)))}
+  
+  ###set up plotting sequence###  
   my_seq <- seq(from=2,to=nrow(result),by=plot_every)
+  
+  
+  ###set the first point as the current point###
+  current_point <-c(1,result[1,i])
+  
+  ###plot the first point###
+  points(current_point[1],current_point[2], col=col_temp)
+  
+    for(j in my_seq){
     
-  for(j in my_seq){
-    if(logic){
-        colour <- c(2,1)[acceptance[j]+1]
-      }else{
-        colour<-1
-      }
+    ###if previous point has been accepted, update the current point###
+    if(accept==1){
+      current_point  <- c(j-1,result[j-1,i])
+    }
+      
+    ###update the proposed point and its acceptance###  
+    accept         <- acceptance[j]  
+    proposed_point <- c(j,result[j,i])
     
-    points(j-1,result[j-1,i])
-    points(j,result[j,i])
-    lines(c(j-1,j),c(result[j-1,i],result[j,i]),col=colour)
+    ###if point is accepted - plot in black, if rejected - in red###
+    colour <- c(2,1)[accept+1]
+    
+    ###plot the proposed point in the relevant colour###
+    points(proposed_point[1],proposed_point[2],col=colour)
+   
+    ###join the proposed point with the current point in relevant colour###
+    ###if want the direction arrows to be shown, then set arrows=TRUE###
+    if(lines==TRUE){
+    if(arrows==FALSE){
+      segments(current_point[1],current_point[2], proposed_point[1],proposed_point[2], col= colour)
+    }else{
+      arrows(current_point[1],current_point[2], proposed_point[1],proposed_point[2], col= colour)
+    }
+   }
   }
-  }
+ }
 }
+
+plot_HMC_leapfrog <- function(result, leapfrog, acceptance=NA, burnin, xlab, ylab, plot_every=1, points=TRUE, arrows=FALSE){
+  
+  ###trim burnin off###
+  N          <- nrow(result)
+  L          <- max(unique(leapfrog[,1]))
+  result     <- result[(burnin+1):N,]
+  if(all(is.na(acceptance))) acceptance <- rep(1,times=N)
+  acceptance <- acceptance[(burnin+1):N]
+  leapfrog   <- leapfrog[-seq(from=1,to=burnin*L,by=1),]
+  
+  ###has the first point been accepted?###
+  accept     <- acceptance[1]
+  col_temp   <- c(2,1)[accept+1]
+  
+  ###set up plotting area###
+  par(mfrow=c(1,1))
+  plot(NULL,ylim=range(leapfrog[,3],result[,2]),xlim=range(leapfrog[,2],result[,1]),ylab=ylab,xlab=xlab)
+  if(all(acceptance==1)) {title("Output of HMC")
+  }else{title(paste("Acceptance rate=",round(mean(acceptance,na.rm = TRUE),2)))}
+  legend("topright",c("accepted","rejected"),lty=1,col=c(1,2)) 
+  
+  ###print the first point###
+  current_point <- c(result[1,1],result[1,2])
+  points(current_point[1],current_point[2],col=col_temp,pch=20)
+  
+  ###set up plotting sequence###
+  my_seq <- seq(from=2,to=nrow(result),by=plot_every)
+  
+  ###plot all the points###
+  
+  for(i in my_seq){
+  ###if previous point has been accepted then set it as the current point###
+  if(accept==1){
+    current_point  <- c(result[i-1,1],result[i-1,2])
+  }
+  
+  ###record the proposed point and if it has been accepted or not###
+  ###if accepted-plot it in black, if rejected - in red  
+  accept         <- acceptance[i]  
+  proposed_point <- c(result[i,1],result[i,2])
+  colour    <- c(2,1)[acceptance[i]+1]
+  arrow_col <- c(2,3)[acceptance[i]+1]
+  
+  ###plot the proposed point###
+  points(proposed_point[1],proposed_point[2],col=colour,pch=20)
+  
+  ###subset the corresponding leapfrog steps###
+  my_leapfrog <- leapfrog[seq(from=(i-2)*L+1,to=(i-1)*L,by=1),]
+  
+  ###plot intermediate leapfrog steps###
+  if(arrows==TRUE){
+  arrows(current_point[1],current_point[2],my_leapfrog[1,2],my_leapfrog[1,3], col= arrow_col)
+  }else{
+    segments(current_point[1],current_point[2],my_leapfrog[1,2],my_leapfrog[1,3], col= arrow_col)
+  }
+  
+  for(j in 2:L){
+    if(points==TRUE)
+    points(my_leapfrog[j,2],my_leapfrog[j,3],col=arrow_col)
+    if(arrows==TRUE){
+    arrows(my_leapfrog[j-1,2],my_leapfrog[j-1,3], my_leapfrog[j,2],my_leapfrog[j,3], col=arrow_col)
+    }else{
+      segments(my_leapfrog[j-1,2],my_leapfrog[j-1,3], my_leapfrog[j,2],my_leapfrog[j,3], col=arrow_col)
+    }
+  }
+
+} 
+  
+  ###join the proposed point with the current point in relevant colour###
+  ###if want the direction arrows to be shown, then set arrows=TRUE###
+  #if(lines==TRUE){
+   # if(arrows==FALSE){
+    #  segments(current_point[1],current_point[2], proposed_point[1],proposed_point[2], col= colour)
+    #}else{
+    #  arrows(current_point[1],current_point[2], proposed_point[1],proposed_point[2], col= colour)
+    #}
+  
+}
+  
+  
