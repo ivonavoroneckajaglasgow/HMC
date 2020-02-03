@@ -82,8 +82,8 @@ plot(x,y,pch = 20,col = Col)
 mean(gamma_result$accept[burnin:N])
 
 ###beta###
-epsilon <- 0.01
-L <- 20
+epsilon <- 0.05
+L <- 10
 N <- 1000
 burnin <- 200
 
@@ -91,8 +91,8 @@ set.seed(7)
 beta_result<-HMC(x,y,N,burnin, U_HMC, ddall, epsilon, L, current_q=c(mean(y),0,mean(y),0), which=c("beta1","beta2"))
 plot_HMC(result=beta_result$all_q[,1:2], acceptance= beta_result$accept,burnin=burnin, xlab="beta01", ylab="beta11")
 #plot_HMC(result=beta_result$all_q[,1:2], acceptance= beta_result$accept,burnin=burnin, xlab="beta01", ylab="beta11",arrows = TRUE)
-plot_HMC(result=beta_result$all_q[,1:2], acceptance= NA, burnin=burnin, xlab="beta01",ylab="beta11")
-plot_HMC(result=beta_result$all_q[,1:2], acceptance= NA, burnin=burnin, xlab="beta01",ylab="beta11",lines = FALSE)
+plot_HMC(result=beta_result$output[,1:2], acceptance= NA, burnin=burnin, xlab="beta01",ylab="beta11")
+plot_HMC(result=beta_result$output[,1:2], acceptance= NA, burnin=burnin, xlab="beta01",ylab="beta11",lines = FALSE)
 
 plot_HMC_leapfrog(result=beta_result$all_q[,1:2],
                   leapfrog=beta_result$leapfrog[,c(1,2,3)],
@@ -102,8 +102,8 @@ plot_HMC_leapfrog(result=beta_result$all_q[,1:2],
 
 plot_HMC(result=beta_result$all_q[,3:4], acceptance= beta_result$accept,burnin=burnin, xlab="beta01", ylab="beta11")
 #plot_HMC(result=beta_result$all_q[,3:4], acceptance= beta_result$accept,burnin=burnin, xlab="beta01", ylab="beta11",arrows = TRUE)
-plot_HMC(result=beta_result$all_q[,3:4], acceptance= NA, burnin=burnin, xlab="beta01",ylab="beta11")
-plot_HMC(result=beta_result$all_q[,3:4], acceptance= NA, burnin=burnin, xlab="beta01",ylab="beta11",lines = FALSE)
+plot_HMC(result=beta_result$output[,3:4], acceptance= NA, burnin=burnin, xlab="beta01",ylab="beta11")
+plot_HMC(result=beta_result$output[,3:4], acceptance= NA, burnin=burnin, xlab="beta01",ylab="beta11",lines = FALSE)
 
 plot_HMC_leapfrog(result=beta_result$all_q[,3:4],
                   leapfrog=beta_result$leapfrog[,c(1,4,5)],

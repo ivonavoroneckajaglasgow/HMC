@@ -11,18 +11,18 @@ getmu         <- function(x,params){
   return(cbind(mu1,mu2))
 }
 
-dmix          <- function(x,y,params,transform_sigma=FALSE,explog=TRUE){
+dmix          <- function(x,y,params,transform_sigma=FALSE){
   if(transform_sigma==TRUE) params <- transform_sigma(params)
   
   prob   <- p_calculator(params$gamma,x)
   mu     <- getmu(x, params)
-  if(explog==TRUE){
-   return(expm1(log1p(prob-1)+dnorm(y,mu[,1],sqrt(params$sigma1),log=TRUE))+1
-          +expm1(log1p((1-prob-1))+dnorm(y,mu[,2],sqrt(params$sigma2),log=TRUE))+1)
-  }else{
   return(prob*dnorm(y,mu[,1],sqrt(params$sigma1))+(1-prob)*dnorm(y,mu[,2],sqrt(params$sigma2)))
 }
+
+dmix_log <- function(x,y,params,transform_sigma=FALSE){
+  log(dmix(x,y,params))
 }
+
 
 U             <- function(x,y,params,transform_sigma=FALSE){
   sum(-log(dmix(x,y,params,transform_sigma)))
@@ -48,36 +48,46 @@ ddgamma       <- function(x,y,params){
 }
 
 
-ddbeta_helper <- function(x,y,params){
+ddbeta_helper <- function(x,y,params,mu){
   
   prob    <- p_calculator(params$gamma,x)
-  mu      <- getmu(x, params)
-  
-  ###first component exp(log(pi*f_1))
-  second1 <- expm1(log1p(prob-1)+dnorm(y,mean=mu[,1],sd=sqrt(params$sigma1),log=TRUE))+1
-  ###second component exp(log((1-pi)*f_2))
-  second2 <- expm1(log1p((1-prob-1))+dnorm(y,mean=mu[,2],sd=sqrt(params$sigma2),log=TRUE))+1
+
+  ###first component 
+  second1 <- prob*dnorm(y,mean=mu[,1],sd=sqrt(params$sigma1))
+  ###second component 
+  second2 <- (1-prob)*dnorm(y,mean=mu[,2],sd=sqrt(params$sigma2))
 
   first   <- -1/dmix(x,y,params)
   return(cbind(first*second1,first*second2))
+}
+
+ddbeta_helper_log <- function(x,y,params,mu){
   
-  ####the adjustment bit that I am not sure about####
-  #A<- log(second1)
-  #B<- log(second2)
+  prob    <- p_calculator(params$gamma,x)
   
-  #largest <- A
-  #largest[B>A] <- B[B>A]
+  ###first component on a log scale
+  second1 <- log(prob)+dnorm(y,mean=mu[,1],sd=sqrt(params$sigma1),log=TRUE)
+  ###second component on a log scale
+  second2 <- log(1-prob)+dnorm(y,mean=mu[,2],sd=sqrt(params$sigma2),log=TRUE)
   
-  #first   <- -1/(dmix(x,y,params)-largest)
-  #return(cbind(first*(second1-largest),first*(second2-largest)))
+  ###for each point find out which component is the largest###
+  largest <- apply(cbind(second1,second2),1,max)
   
- 
+  ###calculate the density of the mixture on a log scale and subtract the largest###
+  first   <- -1/(dmix_log(x,y,params)-largest)
+  
+  ###subtract the largest from both component densities and multiply by the above step###
+  adjusted <- cbind(first*(second1-largest),first*(second2-largest))
+  
+  ###return back to the normal scale###
+  return(exp(adjusted))
 }
 
 ddbeta        <- function(x,y,params){
   params        <- transform_sigma(params)
   mu            <- getmu(x, params)
-  first         <- ddbeta_helper(x,y,params)
+  #first         <- ddbeta_helper(x,y,params,mu)
+  first         <- ddbeta_helper_log(x,y,params,mu)
   comp1_beta0   <- first[,1]*(y-mu[,1])/params$sigma1
   comp1_beta1   <- comp1_beta0*x
   comp2_beta0   <- first[,2]*(y-mu[,2])/params$sigma2
