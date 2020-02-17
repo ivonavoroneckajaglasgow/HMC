@@ -53,13 +53,13 @@ params<-list(gamma=-c(-11.95,2.42),
 ###test estimating stuff###
 ###let's do gamma###
 
-epsilon <- 0.1
+epsilon <- 0.27
 L <- 20
 N <- 1000
 burnin <- 200
 
 set.seed(7)
-gamma_result<-HMC(x,y,N,burnin, U_HMC, ddall, epsilon, L, current_q=c(0,0), which="gamma")
+gamma_result<-HMC(x,y,N,burnin, U=U_HMC, ddall, epsilon, L, current_q=c(0,0), which="gamma")
 plot_HMC(gamma_result$all_q,acceptance = gamma_result$accept,burnin, xlab="gamma0",ylab="gamma1")
 plot_HMC(gamma_result$all_q,acceptance = gamma_result$accept,burnin, xlab="gamma0",ylab="gamma1",arrows = TRUE)
 
@@ -82,8 +82,8 @@ plot(x,y,pch = 20,col = Col)
 mean(gamma_result$accept[burnin:N])
 
 ###beta###
-epsilon <- 0.05
-L <- 10
+epsilon <- 0.04
+L <- 20
 N <- 1000
 burnin <- 200
 

@@ -1,8 +1,8 @@
 library(coda)
-HMC_helper <- function(x, y, U, ddall, epsilon, L, current_q, m=1, which) 
+HMC_helper <- function(x, y, U, ddall, epsilon, L, current_q, m=1, which,momentum) 
 {
   q <- current_q
-  p <- rnorm(length(q),0,1)
+  p <- rnorm(length(q),0,momentum)
   current_p <- p
   
   # Make a half step for momentum at the beginning
@@ -37,13 +37,14 @@ HMC_helper <- function(x, y, U, ddall, epsilon, L, current_q, m=1, which)
   params_current          <- assign_paramater_values(params,which,v=current_q)
   current_U               <- U(x,y,params_current)
   
-  
   params_proposed          <- assign_paramater_values(params,which,v=q)
   proposed_U               <- U(x,y,params_proposed)
+ 
   
   
-  proposed_K <- sum(p^2)/2
   current_K  <- sum(current_p^2)/2
+  proposed_K <- sum(p^2)/2
+  
   #Accept or reject
   
   r <- current_U-proposed_U+current_K-proposed_K
@@ -52,7 +53,7 @@ HMC_helper <- function(x, y, U, ddall, epsilon, L, current_q, m=1, which)
   
   records$q         <- q
   records$current_q <- current_q
-  records$accept    <- ifelse(log(runif(1))< r,1,0)
+  records$accept    <- ifelse(runif(1)< exp(r),1,0)
   records$leapfrog  <- allq
   
   if(records$accept==1){
@@ -72,7 +73,9 @@ return(records)
   
 }
 
-HMC <- function(x, y, N, burnin, U, ddall, epsilon, L, current_q, which=c("gamma","beta1","sigma1","beta2","sigma2"), do.plot=TRUE, actual = NA){
+HMC <- function(x, y, N, burnin, U, ddall, epsilon, L, current_q, 
+                which=c("gamma","beta1","sigma1","beta2","sigma2"), do.plot=TRUE, actual = NA,
+                momentum=1){
   
   HMC_result        <- list()
   
@@ -92,7 +95,7 @@ HMC <- function(x, y, N, burnin, U, ddall, epsilon, L, current_q, which=c("gamma
   for(j in 2:N){
     setTxtProgressBar(pb, j)
     
-    a <- HMC_helper(x, y, U,ddall,epsilon,L,current_q =  HMC_result$output[j-1,],which=which)
+    a <- HMC_helper(x, y, U,ddall,epsilon,L,current_q =  HMC_result$output[j-1,],which=which,momentum=momentum)
     
     HMC_result$output[j,]<- a$final
     HMC_result$all_q[j,] <- a$q

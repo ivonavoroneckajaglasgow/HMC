@@ -19,11 +19,6 @@ dmix          <- function(x,y,params,transform_sigma=FALSE){
   return(prob*dnorm(y,mu[,1],sqrt(params$sigma1))+(1-prob)*dnorm(y,mu[,2],sqrt(params$sigma2)))
 }
 
-dmix_log <- function(x,y,params,transform_sigma=FALSE){
-  log(dmix(x,y,params))
-}
-
-
 U             <- function(x,y,params,transform_sigma=FALSE){
   sum(-log(dmix(x,y,params,transform_sigma)))
 }
@@ -73,14 +68,14 @@ ddbeta_helper_log <- function(x,y,params,mu){
   ###for each point find out which component is the largest###
   largest <- apply(cbind(second1,second2),1,max)
   
-  ###calculate the density of the mixture on a log scale and subtract the largest###
-  first   <- -1/(dmix_log(x,y,params)-largest)
+  adjusted1 <- exp(second1-largest)
+  adjusted2 <- exp(second2-largest)
   
-  ###subtract the largest from both component densities and multiply by the above step###
-  adjusted <- cbind(first*(second1-largest),first*(second2-largest))
+  adjusted <- cbind(-adjusted1/(adjusted1+adjusted2),
+                    -adjusted2/(adjusted1+adjusted2))
+
+  return(adjusted)
   
-  ###return back to the normal scale###
-  return(exp(adjusted))
 }
 
 ddbeta        <- function(x,y,params){
